@@ -11,7 +11,17 @@ export const works = [
     alt: 'Smoke-stained paper artwork: a white egret resting on a branch, surrounded by warm smoke-stained tones.',
     description: 'A moment of stillness, held in paper and smoke. The pale shape of an egret rests against a softly stained world.',
     medium: 'Smoke-stained paper', note: 'Ask the studio about dimensions, framing and availability.' },
-  ...[1, 2, 3, 4].map((number) => ({
+  { id: 'floral-study', title: 'Floral Study', category: 'Botanical', kind: 'original',
+    src: 'art/floral-study.jpg', ratio: 4 / 3, rotation: 0,
+    alt: 'Colorful floral artwork with pink and yellow shapes, dark green stems and expressive flowers.',
+    description: 'Pink, yellow and green fill a lively floral composition, with long stems and expressive petals layered over a patterned background.',
+    medium: 'Artwork', note: 'Descriptive working title. Ask the studio for the official title, medium, dimensions, framing and availability.' },
+  { id: 'woodland-mushrooms', title: 'Woodland Mushrooms', category: 'Woodland', kind: 'original',
+    src: 'art/woodland-mushrooms.jpg', ratio: 3 / 4, rotation: 0,
+    alt: 'Woodland artwork with tall green trees, a warm sunset sky and red mushrooms with white spots in the foreground.',
+    description: 'A path into a green woodland beneath a glowing sky. Red mushrooms gather between the trees in the foreground.',
+    medium: 'Artwork', note: 'Descriptive working title. Ask the studio for the official title, medium, dimensions, framing and availability.' },
+  ...[3, 4].map((number) => ({
     id: `future-${number}`, title: `Future work ${String(number).padStart(2, '0')}`,
     category: 'Coming into view', kind: 'placeholder', ratio: number % 2 ? 4 / 3 : 4 / 5,
     description: 'An empty place in an evolving exhibition. This simple layout placeholder is not an artwork by Marnie.',

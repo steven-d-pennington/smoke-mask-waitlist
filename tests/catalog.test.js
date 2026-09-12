@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { works, clampStop, filterWorks, station } from '../src/catalog.js';
 
 test('mockups cannot masquerade as original artwork', () => {
-  assert.equal(filterWorks('original').length, 2);
+  assert.equal(filterWorks('original').length, 4);
   for (const work of filterWorks('placeholder')) {
     assert.equal(work.src, undefined);
     assert.match(work.medium, /Not an artwork/);

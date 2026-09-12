@@ -16,7 +16,7 @@ Open http://127.0.0.1:4178. The website is static; no backend, framework router 
 
 Add the image to the repository and one record to `src/catalog.js`, following Lighthouse or Egret. Give it a unique ID, a title, category, real description and image display ratio. The ratio describes the image, not the artwork's physical measurements. The supplied `art/lighthouse.png` crop is already upright and uses `rotation: 0`. The original sideways `hero.jpg` remains available through the detail view, but is not used in the new mounts. Replace a placeholder record when a real work is ready, then run `npm run build`.
 
-The single catalog populates the walkthrough, stop selector, collection filters and detail dialog. Placeholder records intentionally have no `src` and are labeled as non-artwork throughout. Preserve those labels until actual work is supplied. Update the two static fallback cards in `index.html` if the initial real works change.
+The single catalog populates the walkthrough, stop selector, collection filters and detail dialog. Placeholder records intentionally have no `src` and are labeled as non-artwork throughout. Preserve those labels until actual work is supplied. Update the static fallback cards in `index.html` if the initial real works change.
 
 ## Checks
 
@@ -33,4 +33,4 @@ The form posts through Formsubmit AJAX with a plain POST fallback and a confirma
 - [Design research, preservation rules and verification](docs/gallery-design.md)
 - [Collector outreach shortlist and 30-day plan](docs/collector-outreach.md)
 
-The marketing plan is research and draft copy; no posts, applications or outreach were sent. The four future-work cards are only layout placeholders, not replicas or previews of Marnie's art.
+The marketing plan is research and draft copy; no posts, applications or outreach were sent. The two future-work cards are only layout placeholders, not replicas or previews of Marnie's art.

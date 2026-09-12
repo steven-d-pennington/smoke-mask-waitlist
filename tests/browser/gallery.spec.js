@@ -1,5 +1,23 @@
 import { test, expect } from '@playwright/test';
 
+test('new photographs appear at their stops without an invented medium', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('#gallery-stage')).toHaveAttribute('data-state', 'ready');
+  for (const [stop, title, photo] of [['2', 'Floral Study', 'art/floral-study.jpg'], ['3', 'Woodland Mushrooms', 'art/woodland-mushrooms.jpg']]) {
+    await page.locator('#stop-select').selectOption(stop);
+    await expect(page.locator('#stop-title')).toHaveText(title);
+    await expect(page.locator('#stop-medium')).toHaveText('Artwork');
+    await page.locator('#view-work').click();
+    await expect(page.locator('#detail-art img')).toHaveAttribute('src', photo);
+    await expect(page.locator('#detail-note')).toContainText('Descriptive working title');
+    await page.waitForFunction(() => document.querySelector('#detail-art img').complete && document.querySelector('#detail-art img').naturalWidth > 0);
+    await page.screenshot({ path: `/tmp/marni-${stop}-new-art.png` });
+    await page.keyboard.press('Escape');
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test('walkthrough navigation, detail focus and selected-artwork inquiry', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -38,13 +56,13 @@ test('phone collection stays within viewport and distinguishes mockups', async (
   await page.locator('[data-mode=collection]').click();
   await expect(page.locator('#gallery-stage')).toBeHidden();
   await page.locator('[data-filter=original]').click();
-  await expect(page.locator('.collection-card')).toHaveCount(2);
+  await expect(page.locator('.collection-card')).toHaveCount(4);
   await page.getByRole('button', { name: 'View Lighthouse', exact: true }).click();
   await expect(page.locator('#detail-title')).toHaveText('Lighthouse');
   expect(await page.locator('#detail-art img').evaluate(image => image.complete && image.naturalWidth > 0)).toBe(true);
   await page.keyboard.press('Escape');
   await page.locator('[data-filter=placeholder]').click();
-  await expect(page.locator('.collection-card')).toHaveCount(4);
+  await expect(page.locator('.collection-card')).toHaveCount(2);
   await expect(page.locator('.collection-card img')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.locator('[data-filter=all]').click();
@@ -80,11 +98,11 @@ test('switching away while the room loads preserves the chosen mode', async ({ p
   await expect(page.locator('[data-mode=collection]')).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('no-JavaScript visitors can still view both originals and use signup', async ({ browser }) => {
+test('no-JavaScript visitors can still view all originals and use signup', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto(process.env.GALLERY_URL || 'http://127.0.0.1:4178');
-  await expect(page.locator('#collection-grid img')).toHaveCount(2);
+  await expect(page.locator('#collection-grid img')).toHaveCount(4);
   await expect(page.locator('input[type=email]')).toBeVisible();
   await expect(page.locator('form')).toHaveAttribute('action', 'https://formsubmit.co/steve.d.pennington@gmail.com');
   await context.close();
