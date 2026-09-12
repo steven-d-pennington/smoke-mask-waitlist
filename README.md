@@ -1,5 +1,7 @@
-# Smoke Mask Studio — Interest List
+# Marnie — Art, carried by smoke
 
-Fishing / demand-test waitlist for smoke-stained paper art.
+Production waitlist site for Marnie's original smoke-stained paper art.
 
-Signups email via Formsubmit to the configured address.
+Hand-masked scenes, stained with smoke. Each piece is an original — made slowly, with a character all its own.
+
+Signups email via Formsubmit to steve.d.pennington@gmail.com
