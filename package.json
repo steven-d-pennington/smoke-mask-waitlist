@@ -1,4 +1,18 @@
 {
   "name": "marnie-waitlist",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "three": "0.186.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "esbuild": "0.28.2"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "python3 -m http.server 4178 --bind 127.0.0.1",
+    "test": "node --test tests/*.test.js",
+    "test:browser": "playwright test"
+  }
 }
