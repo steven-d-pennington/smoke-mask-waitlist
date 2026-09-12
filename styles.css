@@ -354,3 +354,6 @@ summary { font-size: 14px; color: var(--on-ink-dim); }
   .process-steps>div { border-bottom: 1px solid var(--hairline); padding-bottom: 15px; }
   .footer>a:last-child { font-size: 11px; }
 }
+
+/* Show complete submitted photos, including tall compositions. */
+.collection-card.original .photo img { object-fit: contain; }
