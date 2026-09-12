@@ -1,1 +1,46 @@
-PLACEHOLDER_LOAD_FROM_FILE
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Marnie — Interest List</title>
+  <meta name="description" content="Hand-masked scenes stained by smoke — one-of-one originals. Join the list for first look." />
+  <meta property="og:title" content="Marnie — Interest List" />
+  <meta property="og:description" content="Landscapes and wildlife stained by smoke — not printed. Join the list for first look." />
+  <meta property="og:image" content="https://raw.githubusercontent.com/steven-d-pennington/smoke-mask-waitlist/main/hero.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .gallery { display: grid; gap: 1.25rem; }
+    .gallery .frame { margin: 0; }
+    .gallery .frame img { display: block; width: 100%; height: auto; background: #1a1410; }
+    .gallery .frame.lighthouse { overflow: hidden; aspect-ratio: 5/4; position: relative; }
+    .gallery .frame.lighthouse img {
+      position: absolute; inset: -12%; width: 124%; height: 124%; max-width: none;
+      object-fit: cover; object-position: center center;
+      transform: rotate(90deg) scale(1.12); transform-origin: center center;
+      background: #1a1410;
+    }
+    .gallery .caption { margin: 0.65rem 0 0; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero-panel">
+      <div class="gallery">
+        <figure class="frame lighthouse">
+          <img src="https://raw.githubusercontent.com/steven-d-pennington/smoke-mask-waitlist/main/hero.jpg" alt="Smoke-stained paper artwork: striped lighthouse on a coastal cliff" width="1400" height="1200" />
+          <figcaption class="caption">Lighthouse · one-of-one</figcaption>
+        </figure>
+        <figure class="frame">
+          <img src="data:image/jpeg;base64,LOAD_FROM_/tmp/gh_egret_inline.html" alt="Smoke-stained paper artwork: white egret on a branch" width="400" height="480" />
+          <figcaption class="caption">Egret · one-of-one</figcaption>
+        </figure>
+      </div>
+      <p class="caption" style="margin-top:1rem">Marnie · smoke-stained on paper</p>
+    </section>
+  </main>
+</body>
+</html>
