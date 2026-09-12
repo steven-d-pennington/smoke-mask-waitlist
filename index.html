@@ -1,1 +1,81 @@
-PLACEHOLDER_LOAD_FROM_FILE
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Marni — Interest List</title>
+  <meta name="description" content="Hand-masked landscapes stained by smoke — one-of-one originals. Join the list for first look." />
+  <meta property="og:title" content="Marni — Interest List" />
+  <meta property="og:description" content="Landscapes stained by smoke — not printed. Join the list for first look." />
+  <meta property="og:image" content="hero.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .frame {
+      overflow: hidden;
+      aspect-ratio: 5 / 4;
+      position: relative;
+    }
+    .frame img {
+      position: absolute;
+      inset: -12%;
+      width: 124%;
+      height: 124%;
+      max-width: none;
+      object-fit: cover;
+      object-position: center center;
+      transform: rotate(-90deg) scale(1.12);
+      transform-origin: center center;
+      background: #1a1410;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero-panel">
+      <figure class="frame">
+        <img src="hero.jpg" alt="Smoke-stained paper artwork: striped lighthouse on a coastal cliff" width="1400" height="1120" />
+      </figure>
+      <p class="caption">Marni · one-of-one · smoke-stained on paper</p>
+    </section>
+    <section class="copy-panel">
+      <p class="eyebrow">Interest list · early look</p>
+      <h1>Landscapes stained by smoke — not printed.</h1>
+      <p class="lede">
+        Hand-masked scenes, stained with smoke until soft gradients meet razor edges.
+        Each original takes weeks. Join the list for first look and early inquire —
+        no spam, no fake “ships tomorrow.”
+      </p>
+      <ul class="bullets">
+        <li>1/1 originals (limited capacity)</li>
+        <li>Possible studio editions / archival prints if demand is there</li>
+        <li>You’ll hear from us only when there’s real news</li>
+      </ul>
+      <form class="waitlist" action="https://formsubmit.co/steve.d.pennington@gmail.com" method="POST">
+        <input type="hidden" name="_subject" value="Marni smoke art — waitlist signup" />
+        <input type="hidden" name="_captcha" value="false" />
+        <input type="hidden" name="_template" value="table" />
+        <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" />
+        <label class="field">
+          <span>Email</span>
+          <input type="email" name="email" required placeholder="you@example.com" autocomplete="email" />
+        </label>
+        <fieldset class="interest">
+          <legend>I’m interested in</legend>
+          <label><input type="checkbox" name="interest" value="original" /> Originals</label>
+          <label><input type="checkbox" name="interest" value="print" /> Prints</label>
+          <label><input type="checkbox" name="interest" value="both" /> Both / not sure</label>
+        </fieldset>
+        <label class="field">
+          <span>Anything else? <em>(optional)</em></span>
+          <textarea name="note" rows="3" placeholder="Size, price range, coastal themes…"></textarea>
+        </label>
+        <button type="submit">Join the list</button>
+        <p class="fine">Works by <strong>Marni</strong>. Smoke-stained on paper using a proprietary staining process.</p>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
