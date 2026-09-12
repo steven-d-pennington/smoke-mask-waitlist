@@ -3,3 +3,4 @@ node_modules
 tests
 docs
 egret-data.js
+dist

@@ -10,7 +10,7 @@ npm run build
 npm run dev
 ```
 
-Open http://127.0.0.1:4178. The website is static; no backend, framework router or runtime CDN is required. `vendor/room.js` is committed so GitHub Pages can serve the same site without a build step. Rebuild it whenever `src/room.js` or `src/catalog.js` changes. Vercel also runs the build script on deployment.
+Open http://127.0.0.1:4178. The website is static; no backend, framework router or runtime CDN is required. `vendor/room.js` is committed so GitHub Pages can serve the same site without a build step. Rebuild it whenever `src/room.js` or `src/catalog.js` changes. Vercel runs the build script and publishes only `dist/`, keeping research and test files out of the public deployment.
 
 ## Add an artwork
 
