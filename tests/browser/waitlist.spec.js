@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 const endpoint = '**/formsubmit.co/ajax/**';
 
 test('interest chips are exclusive, clearable, and submit one value', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#studio-list');
   await page.locator('[data-interest=originals]').click();
   await expect(page.locator('#interest-value')).toHaveValue('originals');
   await page.locator('[data-interest=prints]').click();
@@ -25,7 +25,7 @@ test('interest chips are exclusive, clearable, and submit one value', async ({ p
 });
 
 test('failed request preserves values, retries, and prevents duplicate pending sends', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#studio-list');
   let requests = 0;
   let release;
   const gate = new Promise(resolve => { release = resolve; });
@@ -57,7 +57,7 @@ test('failed request preserves values, retries, and prevents duplicate pending s
 
 test('activation or unsuccessful service responses do not become thank-you states', async ({ page }) => {
   await page.route(endpoint, route => route.fulfill({ json: { success: false, message: 'Activate your form' } }));
-  await page.goto('/');
+  await page.goto('/#studio-list');
   await page.locator('#signup-email').fill('gallery-test@example.com');
   await page.getByRole('button', { name: 'Count me in' }).click();
   await expect(page.locator('#form-error')).toBeVisible();

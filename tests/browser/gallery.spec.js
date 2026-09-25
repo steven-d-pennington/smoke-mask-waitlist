@@ -1,109 +1,91 @@
 import { test, expect } from '@playwright/test';
 
-test('new photographs appear at their stops without an invented medium', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test('native scroll moves through the artworks and ends at the studio form', async ({ page }) => {
+  const errors=[]; page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/');
-  await expect(page.locator('#gallery-stage')).toHaveAttribute('data-state', 'ready');
-  for (const [stop, title, photo] of [['2', 'Floral Study', 'art/floral-study.jpg'], ['3', 'Woodland Mushrooms', 'art/woodland-mushrooms.jpg']]) {
-    await page.locator('#stop-select').selectOption(stop);
-    await expect(page.locator('#stop-title')).toHaveText(title);
-    await expect(page.locator('#stop-medium')).toHaveText('Artwork');
-    await page.locator('#view-work').click();
-    await expect(page.locator('#detail-art img')).toHaveAttribute('src', photo);
-    await expect(page.locator('#detail-note')).toContainText('Descriptive working title');
-    await page.waitForFunction(() => document.querySelector('#detail-art img').complete && document.querySelector('#detail-art img').naturalWidth > 0);
-    await page.screenshot({ path: `/tmp/marni-${stop}-new-art.png` });
-    await page.keyboard.press('Escape');
-  }
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-});
-
-test('walkthrough navigation, detail focus and selected-artwork inquiry', async ({ page }) => {
-  const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
-  await expect(page.locator('#gallery-stage')).toHaveAttribute('data-state', 'ready');
-  await expect(page.getByRole('button', { name: 'Previous artwork', exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Next artwork', exact: true }).click();
-  await expect(page.locator('#stop-title')).toHaveText('Egret');
-  await page.locator('#gallery-stage').focus();
-  await page.keyboard.press('End');
-  await expect(page.getByRole('button', { name: 'Next artwork', exact: true })).toBeDisabled();
-  await expect(page.locator('#stop-type')).toContainText('Not an artwork');
-  await page.locator('#view-work').click();
-  await expect(page.locator('#art-dialog')).toBeVisible();
-  await expect(page.locator('#detail-inquire')).toBeHidden();
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#view-work')).toBeFocused();
-  await page.locator('#stop-select').selectOption('1');
-  await page.locator('#view-work').click();
-  await page.locator('#detail-crop-toggle').click();
-  await expect(page.locator('#detail-art img')).toHaveAttribute('src', 'art/egret-detail.png');
-  await page.locator('#detail-crop-toggle').click();
-  await expect(page.locator('#detail-art img')).toHaveAttribute('src', 'art/egret.png');
-  await page.locator('#detail-inquire').click();
-  await expect(page.locator('#art-dialog')).not.toBeVisible();
-  await expect(page.locator('#artwork-interest')).toHaveValue('Egret');
-  await expect(page.locator('#signup-email')).toBeFocused();
-  await page.locator('#clear-interest').click();
-  await expect(page.locator('#artwork-interest')).toHaveValue('');
+  await expect(page.locator('#world')).toHaveAttribute('data-ready','true');
+  const start=await page.locator('#world').getAttribute('data-sc-verify-state');
+  await page.mouse.wheel(0,650);
+  await expect(page.locator('#world')).not.toHaveAttribute('data-sc-verify-state',start);
+  await page.locator('#work-select').selectOption('3');
+  await expect(page.locator('#work-title')).toHaveText('Woodland Mushrooms');
+  await page.locator('#next').click();
+  await expect(page.locator('#studio-list')).toBeVisible();
+  await expect(page.locator('#work-select')).toHaveValue('4');
+  await expect(page.locator('#next')).toBeDisabled();
+  await expect(page.locator('.waitlist')).toBeVisible();
+  await page.locator('#first-work').click();
+  await expect(page.locator('#work-select')).toHaveValue('0');
+  await expect(page.locator('#studio-list')).toBeHidden();
   expect(errors).toEqual([]);
 });
 
-test('phone collection stays within viewport and distinguishes mockups', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test('click artwork, inspect the detail, then inquire without losing a form draft', async ({ page }) => {
+  await page.goto('/#studio-list');
+  await page.locator('#signup-email').fill('gallery-test@example.com');
+  await page.locator('#work-select').selectOption('1');
+  await expect(page.locator('#work-title')).toHaveText('Egret');
+  await page.locator('#inspect').click();
+  await page.locator('#detail-crop').click();
+  await expect(page.locator('#detail-photo')).toHaveAttribute('src','art/egret-detail.png');
+  await page.locator('#detail-inquire').click();
+  await expect(page.locator('#studio-list')).toBeVisible();
+  await expect(page.locator('#artwork-interest')).toHaveValue('Egret');
+  await expect(page.locator('#signup-email')).toHaveValue('gallery-test@example.com');
+  await expect(page.locator('#signup-email')).toBeFocused();
+  await page.locator('#collection-mode').click();
+  await expect(page.locator('#collection-form #studio-list')).toBeVisible();
+  await page.locator('#walk-mode').click();
+  await expect(page.locator('#form-mount #studio-list')).toBeVisible();
+  await expect(page.locator('#signup-email')).toHaveValue('gallery-test@example.com');
+});
+
+test('clicking the rendered work opens the right detail and Escape preserves position', async ({ page }) => {
   await page.goto('/');
-  await page.locator('[data-mode=collection]').click();
-  await expect(page.locator('#gallery-stage')).toBeHidden();
-  await page.locator('[data-filter=original]').click();
-  await expect(page.locator('.collection-card')).toHaveCount(4);
-  await page.getByRole('button', { name: 'View Lighthouse', exact: true }).click();
+  await expect(page.locator('#world')).toHaveAttribute('data-ready','true');
+  const rect=await page.locator('#canvas').boundingBox();
+  await page.mouse.click(rect.x+rect.width/2,rect.y+rect.height/2);
+  await expect(page.locator('#details')).toBeVisible();
   await expect(page.locator('#detail-title')).toHaveText('Lighthouse');
-  expect(await page.locator('#detail-art img').evaluate(image => image.complete && image.naturalWidth > 0)).toBe(true);
+  const y=await page.evaluate(()=>scrollY);
   await page.keyboard.press('Escape');
-  await page.locator('[data-filter=placeholder]').click();
-  await expect(page.locator('.collection-card')).toHaveCount(2);
-  await expect(page.locator('.collection-card img')).toHaveCount(0);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.locator('[data-filter=all]').click();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.locator('#details')).toBeHidden();
+  expect(await page.evaluate(()=>scrollY)).toBe(y);
 });
 
-test('reduced motion starts in a usable collection without loading WebGL', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
-  await expect(page.locator('[data-mode=collection]')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#gallery-stage')).toBeHidden();
-  await expect(page.locator('#room-canvas canvas')).toHaveCount(0);
-  await expect(page.locator('.collection-card')).toHaveCount(6);
+test('compact collection and new photographs remain usable', async ({ page }) => {
+  await page.setViewportSize({width:360,height:640});
+  await page.goto('/#collection');
+  await expect(page.locator('#works [data-work]')).toHaveCount(4);
+  await page.getByRole('button',{name:'View Floral Study',exact:true}).click();
+  await expect(page.locator('#detail-photo')).toHaveAttribute('src','art/floral-study.jpg');
+  await expect(page.locator('#detail-note')).toContainText('Descriptive working title');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'View Woodland Mushrooms',exact:true}).click();
+  await expect(page.locator('#detail-photo')).toHaveAttribute('src','art/woodland-mushrooms.jpg');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#collection-form #studio-list')).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
-test('3D load failure falls back without hiding the real works', async ({ page }) => {
-  await page.route('**/vendor/room.js', route => route.abort());
-  await page.goto('/');
-  await expect(page.locator('#gallery-notice')).toBeVisible();
-  await expect(page.locator('#gallery-stage')).toBeHidden();
-  await expect(page.getByRole('button', { name: 'View Egret', exact: true })).toBeVisible();
+test('reduced motion and failed WebGL keep the form in the collection', async ({ page }) => {
+  await page.emulateMedia({reducedMotion:'reduce'}); await page.goto('/');
+  await expect(page.locator('#world')).toBeHidden();
+  await expect(page.locator('#canvas canvas')).toHaveCount(0);
+  await expect(page.locator('#collection-form #studio-list')).toBeVisible();
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.route('**/vendor/room.js',r=>r.abort()); await page.reload();
+  await expect(page.locator('#fallback-note')).toContainText('could not open');
+  await expect(page.locator('#world')).toBeHidden();
+  await expect(page.locator('#collection-form #studio-list')).toBeVisible();
 });
 
-test('switching away while the room loads preserves the chosen mode', async ({ page }) => {
-  let release;
-  const gate = new Promise(resolve => { release = resolve; });
-  await page.route('**/vendor/room.js', async route => { await gate; await route.continue(); });
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await page.locator('[data-mode=collection]').click();
-  release();
-  await expect(page.locator('#gallery-stage')).toHaveAttribute('data-state', 'ready');
-  await expect(page.locator('#gallery-stage')).toBeHidden();
-  await expect(page.locator('[data-mode=collection]')).toHaveAttribute('aria-pressed', 'true');
-});
-
-test('no-JavaScript visitors can still view all originals and use signup', async ({ browser }) => {
-  const context = await browser.newContext({ javaScriptEnabled: false });
-  const page = await context.newPage();
-  await page.goto(process.env.GALLERY_URL || 'http://127.0.0.1:4178');
-  await expect(page.locator('#collection-grid img')).toHaveCount(4);
-  await expect(page.locator('input[type=email]')).toBeVisible();
-  await expect(page.locator('form')).toHaveAttribute('action', 'https://formsubmit.co/steve.d.pennington@gmail.com');
+test('no-JavaScript visitors retain all photographs and the POST form', async ({ browser }) => {
+  const context=await browser.newContext({javaScriptEnabled:false});const page=await context.newPage();
+  await page.goto(process.env.GALLERY_URL||'http://127.0.0.1:4178');
+  await expect(page.locator('#works img')).toHaveCount(4);
+  await expect(page.locator('#signup-email')).toBeVisible();
+  await expect(page.locator('.waitlist')).toHaveAttribute('method','POST');
+  await expect(page.locator('.waitlist')).toHaveAttribute('action','https://formsubmit.co/steve.d.pennington@gmail.com');
   await context.close();
 });

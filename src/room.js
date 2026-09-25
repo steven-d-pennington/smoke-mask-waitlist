@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { works, station, clampStop } from './catalog.js';
 
 // One renderer, a bounded camera route and on-demand frames. No autoplay loop.
-export async function createRoom(host, initialIndex = 0, onFailure = () => {}) {
+export async function createRoom(host, initialIndex = 0, onFailure = () => {}, onFrame = () => {}) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -37,19 +37,34 @@ export async function createRoom(host, initialIndex = 0, onFailure = () => {}) {
   for (let x = -7; x <= 7; x += 1.15) box(.008, .006, length, lineMaterial, x, .002, -length / 2 + 8);
   for (let z = 8; z > -length + 8; z -= 4) box(14, .006, .008, lineMaterial, 0, .003, z);
   const rail = new THREE.MeshStandardMaterial({ color: '#c2b69a', roughness: .8 });
+  // The final stop is a studio reception space, not another artwork.
+  const reception = new THREE.MeshStandardMaterial({ color: '#263e33', roughness: 1 });
+  box(13.8, 5.8, .2, reception, 0, 2.9, -works.length * 9 - .7);
+  box(6.3, .15, 1.5, timber, 0, .86, -works.length * 9 + 1.4);
+  box(.12, .8, 1.2, brass, -2.7, .4, -works.length * 9 + 1.4);
+  box(.12, .8, 1.2, brass, 2.7, .4, -works.length * 9 + 1.4);
   const loader = new THREE.TextureLoader();
   let disposed = false;
   let frame = 0;
   let enabled = true;
-  let index = clampStop(initialIndex);
-  let animation = null;
+  let index = THREE.MathUtils.clamp(initialIndex, 0, works.length);
+  let progress = index;
+  let destinationProgress = index;
+  let lastTime = 0;
   const target = new THREE.Vector3();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   function view(stop) {
-    const s = station(stop);
+    const lower = Math.floor(stop), upper = Math.min(works.length, lower + 1);
+    const t = stop - lower;
+    const smooth = t * t * (3 - 2 * t);
+    const routeStation = i => i === works.length ? { x: 0, y: 2.35, z: -i * 9 } : station(i);
+    const a = routeStation(lower), b = routeStation(upper);
+    const x = THREE.MathUtils.lerp(a.x, b.x, smooth);
+    const z = THREE.MathUtils.lerp(a.z, b.z, t);
     const narrow = host.clientWidth < 600;
-    return { position: new THREE.Vector3(s.x + (narrow ? .15 : 1.0), 2.55, s.z + (narrow ? 7.8 : 6.4)),
-      target: new THREE.Vector3(s.x, 2.25, s.z) };
+    // The camera stays in the clear central aisle while looking toward each work.
+    return { position: new THREE.Vector3(x * .23, 2.45, z + (narrow ? 10.3 : 6.6)),
+      target: new THREE.Vector3(x, 2.25, z) };
   }
   function requestFrame() {
     if (!disposed && enabled && !frame) frame = requestAnimationFrame(render);
@@ -57,24 +72,23 @@ export async function createRoom(host, initialIndex = 0, onFailure = () => {}) {
   function render(now) {
     frame = 0;
     if (disposed || !enabled) return;
-    if (animation) {
-      const p = Math.min(1, (now - animation.start) / 1250);
-      const ease = p * p * (3 - 2 * p);
-      camera.position.lerpVectors(animation.from, animation.to.position, ease);
-      // A small rise makes travel read as a walkthrough, with no perpetual motion.
-      camera.position.y += Math.sin(p * Math.PI) * .3;
-      target.lerpVectors(animation.lookFrom, animation.to.target, ease);
-      if (p === 1) animation = null;
-    }
+    const dt = Math.min(.05, (now - (lastTime || now - 16)) / 1000);
+    lastTime = now;
+    progress = reduced.matches ? Math.round(destinationProgress) : THREE.MathUtils.damp(progress, destinationProgress, 14, dt);
+    if (Math.abs(progress - destinationProgress) < .0002) progress = destinationProgress;
+    const current = view(progress);
+    camera.position.copy(current.position); target.copy(current.target);
     camera.lookAt(target);
     renderer.render(scene, camera);
-    if (animation) requestFrame();
+    onFrame(progress, camera.position.toArray());
+    if (Math.abs(progress - destinationProgress) > .00001) requestFrame();
   }
   const texturePromises = [];
   works.forEach((work, i) => {
     const s = station(i);
     const group = new THREE.Group();
     group.position.set(s.x, s.y, s.z);
+    group.userData.workIndex = i;
     scene.add(group);
     const imageHeight = work.ratio > 1 ? 2.15 : 2.55;
     const imageWidth = imageHeight * work.ratio;
@@ -130,8 +144,8 @@ export async function createRoom(host, initialIndex = 0, onFailure = () => {}) {
     camera.aspect = host.clientWidth / host.clientHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(host.clientWidth, host.clientHeight, false);
-    const current = view(index);
-    camera.position.copy(current.position); target.copy(current.target); animation = null;
+    const current = view(progress);
+    camera.position.copy(current.position); target.copy(current.target);
     requestFrame();
   }
   const observer = new ResizeObserver(resize); observer.observe(host);
@@ -149,12 +163,24 @@ export async function createRoom(host, initialIndex = 0, onFailure = () => {}) {
     renderer.dispose(); renderer.domElement.remove();
   }
   return {
-    goTo(next, instant = false) {
-      index = clampStop(next);
-      const destination = view(index);
-      if (instant || reduced.matches) { camera.position.copy(destination.position); target.copy(destination.target); animation = null; }
-      else animation = { from: camera.position.clone(), lookFrom: target.clone(), to: destination, start: performance.now() };
+    goTo(next) {
+      destinationProgress = THREE.MathUtils.clamp(Number(next) || 0, 0, works.length);
       requestFrame();
+    },
+    pick(clientX, clientY) {
+      const rect = host.getBoundingClientRect();
+      const pointer = new THREE.Vector2((clientX - rect.left) / rect.width * 2 - 1, -(clientY - rect.top) / rect.height * 2 + 1);
+      const ray = new THREE.Raycaster(); ray.setFromCamera(pointer, camera);
+      for (const hit of ray.intersectObjects(scene.children, true)) {
+        let node = hit.object;
+        while (node) {
+          if (node.userData.workIndex !== undefined) return node.userData.workIndex;
+          node = node.parent;
+        }
+        // An opaque room surface in front blocks selecting a hidden work.
+        return null;
+      }
+      return null;
     },
     setEnabled(value) { enabled = value; if (!value) { cancelAnimationFrame(frame); frame = 0; } else requestFrame(); },
     dispose,

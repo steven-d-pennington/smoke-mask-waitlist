@@ -1,173 +1,79 @@
-import { works, clampStop, filterWorks } from './src/catalog.js';
-
-const $ = selector => document.querySelector(selector);
-const roomHost = $('#room-canvas');
-const shell = $('#gallery-stage');
-const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-let active = 0;
-let mode = reduced.matches ? 'collection' : 'walkthrough';
-let engine;
-let loading;
-let failed = false;
-let filter = 'all';
-let focusReturn;
-
-function artMarkup(work) {
-  if (!work.src) return `<div class="placeholder-art" style="aspect-ratio:${work.ratio}"><span aria-hidden="true">+</span><p>Future work</p><small>Layout placeholder · Not an artwork</small></div>`;
-  return `<div class="photo ${work.rotation ? 'photo-rotated' : ''}" style="aspect-ratio:${work.ratio}"><img src="${work.src}" alt="${work.alt}" loading="lazy" /></div>`;
+import { works } from './src/catalog.js';
+const $=s=>document.querySelector(s);const reduced=matchMedia('(prefers-reduced-motion: reduce)');const world=$('#world'),travel=$('#travel');let engine,loading,failed=false,mode='collection',progress=0,active=0,lastPaint=-1,focusReturn;let scheduled=false;let freeze=false;
+const END=works.length;
+const stops=[...works.map(w=>w.title),'Studio list'];
+const formStop=$('#studio-list');
+let focusForm=false;
+const clamp=x=>Math.max(0,Math.min(END,x));
+$('#work-select').innerHTML=stops.map((title,i)=>`<option value="${i}">${title}</option>`).join('');
+$('#gallery-map').innerHTML=stops.map((title,i)=>`<button type="button" data-stop="${i}">${title}</button>`).join('');
+$('#works').innerHTML=works.map((w,i)=>`<figure><button type="button" data-work="${i}" aria-label="View ${w.title}"><img src="${w.src}" alt="${w.alt}" loading="lazy"><figcaption>${w.title}</figcaption></button><p>${w.medium}${w.medium==='Artwork'?' · Working title':''}</p></figure>`).join('');
+function span(){return Math.max(1,travel.offsetHeight-innerHeight)}
+function sizeTrack(){travel.style.height=`${innerHeight+END*innerHeight*1.6}px`}
+function paint(value,position=[]){
+  const ending=value>=END-.35;
+  world.classList.toggle('form-ending',ending);
+  formStop.hidden=mode==='walkthrough'&&!ending;
+  if(ending&&focusForm){focusForm=false;($('#thank-you').hidden?$('#signup-email'):$('#thank-you')).focus({preventScroll:true})}
+  const next=Math.round(value);
+  world.dataset.scVerifyState=JSON.stringify(position.map(n=>Math.round(n*100)/100));
+  $('#journey-progress').style.transform=`scaleX(${value/END})`;
+  if(next===lastPaint)return;
+  lastPaint=next;active=next;
+  const work=works[active];
+  $('#work-title').textContent=work?.title||'The studio list';
+  $('#work-category').textContent=work?.category||'Stay in touch';
+  $('#work-medium').textContent=work?.medium||'A first look at what comes next';
+  $('#inspect').hidden=!work;
+  $('#work-select').value=String(active);
+  $('#prev').disabled=active===0;
+  $('#next').disabled=active===END;
+  document.querySelectorAll('[data-stop]').forEach(b=>b.setAttribute('aria-current',Number(b.dataset.stop)===active?'step':'false'));
 }
-
-function renderCollection() {
-  $('#collection-grid').innerHTML = filterWorks(filter).map(work => `<article class="collection-card ${work.kind}"><button class="art-button" data-work="${work.id}" aria-label="${work.kind === 'original' ? 'View' : 'Preview placeholder for'} ${work.title}"><div class="collection-mount">${artMarkup(work)}</div><span class="view-label">${work.kind === 'original' ? 'Look closer ↗' : 'Empty exhibition space'}</span></button><div class="card-caption"><h3>${work.title}</h3><span>${work.kind === 'original' ? work.category : 'Placeholder'}</span></div><p>${work.medium}${work.kind === 'original' ? ' · Original' : ''}</p></article>`).join('');
+function update(){scheduled=false;if(mode!=='walkthrough'||freeze)return;progress=clamp(scrollY/span()*END);engine?.goTo(reduced.matches?Math.round(progress):progress);if(!engine)paint(progress)}
+function schedule(){if(!scheduled){scheduled=true;requestAnimationFrame(update)}}
+function goTo(stop){if(mode!=='walkthrough')return;const next=clamp(stop);window.scrollTo({top:next/END*span(),behavior:reduced.matches?'instant':'smooth'})}
+function fail(){failed=true;engine?.dispose();engine=undefined;$('#fallback-note').textContent='The 3D room could not open on this device. Every artwork is available in the collection.';setMode('collection')}
+async function load(){if(engine||loading||failed)return;loading=true;try{const module=await import('./vendor/room.js');const ready=await module.createRoom($('#canvas'),progress,fail,paint);if(failed){ready.dispose();return}engine=ready;world.dataset.ready='true';$('#load-state').textContent='Move at your own pace.';engine.setEnabled(mode==='walkthrough'&&!document.hidden);update()}catch{fail()}finally{loading=false}}
+function setMode(next){
+  mode=next;
+  const walking=next==='walkthrough'&&!failed;
+  world.hidden=!walking;travel.hidden=!walking;$('#collection').hidden=walking;
+  $('#walk-mode').setAttribute('aria-pressed',String(walking));
+  $('#collection-mode').setAttribute('aria-pressed',String(!walking));
+  (walking?$('#form-mount'):$('#collection-form')).append(formStop);
+  formStop.hidden=walking&&progress<END-.35;
+  engine?.setEnabled(walking&&!document.hidden);
+  if(walking){sizeTrack();window.scrollTo({top:progress/END*span(),behavior:'instant'});load();schedule()}
+  else window.scrollTo({top:0,behavior:'instant'});
 }
+function show(index,opener){const w=works[index];if(!w)return;freeze=true;focusReturn=opener;$('#detail-inquire').dataset.work=String(index);$('#detail-title').textContent=w.title;$('#detail-category').textContent=w.category+' · '+w.medium;$('#detail-photo').src=w.src;$('#detail-photo').alt=w.alt;$('#detail-description').textContent=w.description;$('#detail-note').textContent=w.note;const toggle=$('#detail-crop');toggle.hidden=!w.detailSrc;toggle.textContent='View detail photograph';let detail=false;toggle.onclick=()=>{detail=!detail;$('#detail-photo').src=detail?w.detailSrc:w.src;toggle.textContent=detail?'View full piece':'View detail photograph'};$('#details').showModal();document.body.classList.add('dialog-open');engine?.setEnabled(false)}
+$('#details').addEventListener('close',()=>{document.body.classList.remove('dialog-open');freeze=false;focusReturn?.focus({preventScroll:true});engine?.setEnabled(mode==='walkthrough'&&!document.hidden);schedule()});$('#close').addEventListener('click',()=>$('#details').close());$('#details').addEventListener('click',e=>{if(e.target===$('#details'))$('#details').close()});$('#inspect').addEventListener('click',e=>show(active,e.currentTarget));$('#works').addEventListener('click',e=>{const b=e.target.closest('[data-work]');if(b)show(Number(b.dataset.work),b)});
+let pointer;
+$('#canvas').addEventListener('pointerdown',e=>{pointer={x:e.clientX,y:e.clientY}});
+$('#canvas').addEventListener('pointercancel',()=>pointer=null);
+$('#canvas').addEventListener('pointerup',e=>{if(!pointer)return;const distance=Math.hypot(e.clientX-pointer.x,e.clientY-pointer.y);pointer=null;if(distance>8)return;const picked=engine?.pick(e.clientX,e.clientY);if(picked!==null&&picked!==undefined)show(picked,$('#inspect'))});
+$('#gallery-map').addEventListener('click',e=>{const b=e.target.closest('[data-stop]');if(b)goTo(Number(b.dataset.stop))});$('#work-select').addEventListener('change',e=>goTo(Number(e.target.value)));$('#prev').addEventListener('click',()=>goTo(active-1));$('#next').addEventListener('click',()=>goTo(active+1));$('#walk-mode').addEventListener('click',()=>setMode('walkthrough'));$('#collection-mode').addEventListener('click',()=>setMode('collection'));
+addEventListener('scroll',schedule,{passive:true});addEventListener('resize',()=>{if(mode==='walkthrough'){sizeTrack();window.scrollTo({top:progress/END*span(),behavior:'instant'});schedule()}});
+addEventListener('keydown',e=>{if(mode!=='walkthrough'||$('#details').open||e.target.matches('select,input,textarea')||e.target.closest('.form-stop'))return;if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();goTo(e.key==='Home'?0:e.key==='End'?END:active+(e.key==='ArrowRight'?1:-1))}});
+document.addEventListener('visibilitychange',()=>engine?.setEnabled(!document.hidden&&!freeze&&mode==='walkthrough'));reduced.addEventListener('change',e=>{if(e.matches)setMode('collection')});setMode(reduced.matches?'collection':'walkthrough');paint(0);
 
-function goTo(index) {
-  active = clampStop(index);
-  const work = works[active];
-  $('#stop-title').textContent = work.title;
-  $('#stop-medium').textContent = work.medium;
-  $('#stop-counter').textContent = `${String(active + 1).padStart(2, '0')} / ${String(works.length).padStart(2, '0')}`;
-  $('#stop-type').textContent = work.kind === 'original' ? 'Original work' : 'Layout placeholder · Not an artwork';
-  $('#view-work').textContent = work.kind === 'original' ? 'Look closer ↗' : 'About this space ↗';
-  $('#previous-work').disabled = active === 0;
-  $('#next-work').disabled = active === works.length - 1;
-  $('#stop-select').value = String(active);
-  document.querySelectorAll('[data-stop]').forEach(button => {
-    button.setAttribute('aria-current', Number(button.dataset.stop) === active ? 'step' : 'false');
-  });
-  engine?.goTo(active);
+function joinStudio(){
+  if(mode==='walkthrough'){focusForm=true;goTo(END);if(progress>=END-.35)paint(progress)}
+  else {formStop.scrollIntoView({behavior:reduced.matches?'instant':'smooth'});($('#thank-you').hidden?$('#signup-email'):$('#thank-you')).focus({preventScroll:true})}
 }
+document.querySelectorAll('[data-join]').forEach(button=>button.addEventListener('click',joinStudio));
+$('#detail-inquire').addEventListener('click',()=>{
+ const work=works[Number($('#detail-inquire').dataset.work)];
+ $('#artwork-interest').value=work.title;$('#inquiry-context').hidden=false;$('#inquiry-context span').textContent=work.title;
+ focusReturn=null;$('#details').close();freeze=false;joinStudio();
+});
+$('#clear-interest').addEventListener('click',()=>{$('#artwork-interest').value='';$('#inquiry-context').hidden=true});
 
-function failRoom() {
-  failed = true;
-  engine?.dispose(); engine = undefined;
-  shell.dataset.state = 'fallback';
-  $('#gallery-notice').hidden = false;
-  $('#gallery-notice').textContent = 'The 3D room couldn’t open on this device. You can explore every work in the collection below.';
-  setMode('collection');
+$('#first-work').addEventListener('click',()=>goTo(0));
+function openLinkedSection(){
+ if(location.hash==='#studio-list')joinStudio();
+ else if(location.hash==='#collection')setMode('collection');
 }
-
-async function loadRoom() {
-  if (engine || loading || failed) return;
-  shell.dataset.state = 'loading';
-  $('#gallery-message').textContent = 'Opening the gallery…';
-  loading = import('./vendor/room.js').then(module => module.createRoom(roomHost, active, failRoom));
-  try {
-    const ready = await loading;
-    if (failed) { ready.dispose(); return; }
-    engine = ready;
-    engine.goTo(active, true);
-    engine.setEnabled(mode === 'walkthrough' && !document.hidden);
-    shell.dataset.state = 'ready';
-    $('#gallery-message').textContent = 'Use the arrows or swipe sideways to explore. Take your time.';
-  } catch { failRoom(); }
-  finally { loading = undefined; }
-}
-
-function setMode(nextMode) {
-  mode = nextMode;
-  const walking = mode === 'walkthrough' && !failed;
-  shell.hidden = !walking;
-  $('#gallery-controls').hidden = !walking;
-  $('#collection').classList.toggle('collection-featured', !walking);
-  document.querySelectorAll('[data-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mode === mode)));
-  engine?.setEnabled(walking && !document.hidden);
-  if (walking) loadRoom();
-}
-
-const dialog = $('#art-dialog');
-function showWork(id, opener) {
-  const work = works.find(item => item.id === id);
-  if (!work) return;
-  focusReturn = opener;
-  $('#detail-art').innerHTML = artMarkup(work);
-  $('#detail-title').textContent = work.title;
-  $('#detail-type').textContent = work.kind === 'original' ? `${work.category} / Original` : 'Layout placeholder · Not an artwork';
-  $('#detail-description').textContent = work.description;
-  $('#detail-medium').textContent = work.medium;
-  $('#detail-note').textContent = work.note;
-  $('#detail-inquire').hidden = work.kind !== 'original';
-  $('#detail-inquire').dataset.work = work.id;
-  $('#original-photo').hidden = !work.src;
-  if (work.src) $('#original-photo').href = work.originalSrc || work.src;
-  const cropToggle = $('#detail-crop-toggle');
-  cropToggle.hidden = !work.detailSrc;
-  cropToggle.setAttribute('aria-pressed', 'false');
-  cropToggle.textContent = 'View the detail crop';
-  cropToggle.onclick = () => {
-    const showDetail = cropToggle.getAttribute('aria-pressed') !== 'true';
-    cropToggle.setAttribute('aria-pressed', String(showDetail));
-    cropToggle.textContent = showDetail ? 'View the full piece' : 'View the detail crop';
-    $('#detail-art').innerHTML = artMarkup(showDetail ? { ...work, src: work.detailSrc, ratio: 5 / 4, alt: 'Smoke-stained paper artwork: detail of the egret and warm-toned branches.' } : work);
-  };
-  dialog.showModal();
-  document.body.classList.add('dialog-open');
-}
-
-$('#collection-grid').addEventListener('click', event => {
-  const button = event.target.closest('[data-work]');
-  if (button) showWork(button.dataset.work, button);
-});
-$('#view-work').addEventListener('click', event => showWork(works[active].id, event.currentTarget));
-$('#dialog-close').addEventListener('click', () => dialog.close());
-dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
-dialog.addEventListener('close', () => {
-  document.body.classList.remove('dialog-open');
-  focusReturn?.focus({ preventScroll: true });
-});
-$('#detail-inquire').addEventListener('click', event => {
-  const work = works.find(item => item.id === event.currentTarget.dataset.work);
-  $('#artwork-interest').value = work.title;
-  $('#inquiry-context').hidden = false;
-  $('#inquiry-context span').textContent = work.title;
-  // The dialog's deferred close event must restore focus to the inquiry,
-  // not return it to the gallery after we've moved to the signup section.
-  focusReturn = $('#signup-email');
-  dialog.close();
-  $('#studio-list').scrollIntoView({ behavior: reduced.matches ? 'instant' : 'smooth' });
-  $('#signup-email').focus({ preventScroll: true });
-});
-$('#clear-interest').addEventListener('click', () => {
-  $('#artwork-interest').value = '';
-  $('#inquiry-context').hidden = true;
-});
-$('#previous-work').addEventListener('click', () => goTo(active - 1));
-$('#next-work').addEventListener('click', () => goTo(active + 1));
-$('#stop-select').innerHTML = works.map((work, index) => `<option value="${index}">${String(index + 1).padStart(2, '0')} · ${work.title}</option>`).join('');
-$('#stop-select').addEventListener('change', event => goTo(Number(event.target.value)));
-$('#room-stops').innerHTML = works.map((work, index) => `<button type="button" data-stop="${index}" aria-label="Go to ${work.title}" title="${work.title}"><span>${String(index + 1).padStart(2, '0')}</span></button>`).join('');
-$('#room-stops').addEventListener('click', event => {
-  const button = event.target.closest('[data-stop]');
-  if (button) goTo(Number(button.dataset.stop));
-});
-shell.addEventListener('keydown', event => {
-  if (event.target.matches('input,select,textarea') || dialog.open) return;
-  if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) {
-    event.preventDefault();
-    goTo(event.key === 'Home' ? 0 : event.key === 'End' ? works.length - 1 : active + (event.key === 'ArrowRight' ? 1 : -1));
-  }
-});
-let touch;
-roomHost.addEventListener('pointerdown', event => { touch = { x: event.clientX, y: event.clientY }; });
-roomHost.addEventListener('pointercancel', () => { touch = undefined; });
-roomHost.addEventListener('pointerup', event => {
-  if (!touch) return;
-  const dx = event.clientX - touch.x, dy = event.clientY - touch.y;
-  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) goTo(active + (dx < 0 ? 1 : -1));
-  touch = undefined;
-});
-document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => setMode(button.dataset.mode)));
-document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {
-  filter = button.dataset.filter;
-  document.querySelectorAll('[data-filter]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
-  renderCollection();
-}));
-reduced.addEventListener('change', event => { if (event.matches) setMode('collection'); });
-document.addEventListener('visibilitychange', () => engine?.setEnabled(!document.hidden && mode === 'walkthrough'));
-const visibility = new IntersectionObserver(entries => {
-  engine?.setEnabled(entries[0].isIntersecting && mode === 'walkthrough' && !document.hidden);
-});
-visibility.observe(shell);
-renderCollection(); goTo(0);
-document.documentElement.classList.add('has-gallery');
-setMode(mode);
+window.addEventListener('hashchange',openLinkedSection);
+openLinkedSection();

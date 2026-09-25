@@ -42,3 +42,9 @@ The four `art/*.png` files are copied unchanged from the supplied handoff. Origi
 The form uses the documented Formsubmit AJAX endpoint with the original POST action as no-JavaScript fallback. Controls lock during a request, interest is exclusive/clearable, only an explicit successful service response reveals the thank-you state, and failure preserves all values. Mocked browser coverage verifies success, unsuccessful/activation responses, duplicate-send prevention, preserved values and retry. No live message was sent; inbox receipt remains unverified.
 
 The local ZIP is ignored by Git. No design-component `support.js` runtime is shipped. Prepared PNG assets are retained without another conversion to avoid unnecessary photographic changes; future replacements should use optimized images and the same documented mount ratios.
+
+## September 24 production revision: scrollable room and final form
+
+The approved Scrollcraft follow-up retains the native 3D room and binds ordinary page scroll to a continuous central-aisle camera route. Four real artwork stops lead to a fifth studio-list reception stop. Visible artwork can be clicked directly; selector, arrows and keyboard navigation remain available. The same form node moves between room and collection views, preserving typed values and request state. `/#studio-list` and `/#collection` are supported entry links. The earlier alternative concept pages are not part of production.
+
+Release checks: `npm run build`; three catalog checks; nine Playwright checks covering scroll-to-form, direct raycast artwork click, detail crop/inquiry context, same-position modal close, draft retention across views, compact layout, reduced-motion/renderer-failure fallback, no-JavaScript POST, exclusive interests and mocked form failure/retry/confirmation. No email was sent and actual inbox delivery remains unverified. Physical-device testing remains distinct from the verified desktop/mobile viewport simulations.

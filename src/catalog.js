@@ -21,12 +21,7 @@ export const works = [
     alt: 'Woodland artwork with tall green trees, a warm sunset sky and red mushrooms with white spots in the foreground.',
     description: 'A path into a green woodland beneath a glowing sky. Red mushrooms gather between the trees in the foreground.',
     medium: 'Artwork', note: 'Descriptive working title. Ask the studio for the official title, medium, dimensions, framing and availability.' },
-  ...[3, 4].map((number) => ({
-    id: `future-${number}`, title: `Future work ${String(number).padStart(2, '0')}`,
-    category: 'Coming into view', kind: 'placeholder', ratio: number % 2 ? 4 / 3 : 4 / 5,
-    description: 'An empty place in an evolving exhibition. This simple layout placeholder is not an artwork by Marnie.',
-    medium: 'Layout placeholder · Not an artwork', note: 'A space for a future piece. No artwork, title or availability is implied.',
-  })),
+
 ];
 
 export function clampStop(index, count = works.length) {
@@ -38,5 +33,5 @@ export function filterWorks(filter) {
 }
 
 export function station(index) {
-  return { x: index % 2 === 0 ? -1.6 : 1.6, y: 2.35, z: -index * 9 };
+  return { x: index % 2 === 0 ? -2.8 : 2.8, y: 2.35, z: -index * 9 };
 }
