@@ -1,6 +1,6 @@
 # Marnie — The Smoke Room
 
-An evolving gallery for Marnie's original smoke-stained paper art, with an interactive Three.js walkthrough and accessible HTML collection.
+An evolving gallery for Marnie's original smoke-stained paper art, with a scroll-driven Three.js walkthrough, a studio-list form as the final stop, and an accessible HTML collection.
 
 ## Work locally
 
@@ -33,4 +33,4 @@ The form posts through Formsubmit AJAX with a plain POST fallback and a confirma
 - [Design research, preservation rules and verification](docs/gallery-design.md)
 - [Collector outreach shortlist and 30-day plan](docs/collector-outreach.md)
 
-The marketing plan is research and draft copy; no posts, applications or outreach were sent. The two future-work cards are only layout placeholders, not replicas or previews of Marnie's art.
+The marketing plan is research and draft copy; no posts, applications or outreach were sent. The walkthrough currently has four real artwork stops and the final studio-list stop. No invented artworks are included.
